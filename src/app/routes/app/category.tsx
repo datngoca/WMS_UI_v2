@@ -1,0 +1,20 @@
+import { QueryClient } from "@tanstack/react-query";
+
+import { ContentLayout } from "@/components/layouts";
+import { getCategoriesQueryOptions } from "@/features/categories/api/get-categories";
+import { CategoriesView } from "@/features/categories/components/categories-view/categories-view";
+
+export const clientLoader = (queryClient: QueryClient) => async () => {
+  const query = getCategoriesQueryOptions();
+  return queryClient.query(query);
+};
+
+const AccountRoute = () => {
+  return (
+    <ContentLayout title="Account">
+      <h1 className="text-xl">Hello Dashboard</h1>
+      <CategoriesView />
+    </ContentLayout>
+  );
+};
+export default AccountRoute;

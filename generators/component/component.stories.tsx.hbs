@@ -1,0 +1,21 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import { {{properCase name}} } from "./{{kebabCase name}}";
+
+const meta: Meta<typeof {{properCase name}}> = {
+    title: "UI/{{pascalCase name}}",
+    component: {{properCase name}},
+    tags: ["autodocs"],
+    argTypes: {
+    // Thêm các props của component tại đây
+    },
+};
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+    args: {
+        // Truyền các props mặc định tại đây
+    },
+};
