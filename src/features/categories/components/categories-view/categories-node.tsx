@@ -2,6 +2,7 @@ import * as React from "react";
 import { type Category } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { CreateCategory } from "../create-category";
+import { UpdateCategory } from "../update-category";
 
 export type CategoryNodeProps = {
   category: Category;
@@ -204,7 +205,8 @@ export const CategoryNode = ({
               />
             </svg>
           </button> */}
-          <CreateCategory parent={{id: category.id, name: category.name}} />
+          <UpdateCategory categoryId={category.id} initialCategory={category} />
+          <CreateCategory parent={{ id: category.id, name: category.name }} />
 
           {/* Selected Indicator Dot */}
           {isSelected && (

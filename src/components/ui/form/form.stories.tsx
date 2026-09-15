@@ -8,6 +8,7 @@ import { FormDrawer } from "./form-drawer";
 import { Input } from "./input";
 import { Select } from "./select";
 import { Textarea } from "./textarea";
+import { TreeSelect } from "./tree-select";
 
 const formSchema = z.object({
   title: z
@@ -223,4 +224,82 @@ export const InFormDrawer: Story = {
       </FormDrawer>
     );
   },
-};
+};
+
+const treeData = [
+  {
+    name: "Electronics",
+    value: "electronics",
+    children: [
+      {
+        name: "Phones",
+        value: "phones",
+        children: [
+          { name: "Smartphones", value: "smartphones" },
+          { name: "Accessories", value: "accessories" },
+        ],
+      },
+      {
+        name: "Laptops",
+        value: "laptops",
+      },
+    ],
+  },
+  {
+    name: "Clothing",
+    value: "clothing",
+    children: [
+      { name: "Men", value: "men" },
+      { name: "Women", value: "women" },
+    ],
+  },
+];
+
+const treeFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  category: z.string().min(1, "Please select a category"),
+});
+
+type TreeFormValues = z.infer<typeof treeFormSchema>;
+
+export const WithTreeSelectField: StoryObj<typeof Form<typeof treeFormSchema, TreeFormValues>> = {
+  render: () => {
+    return (
+      <div className="w-full max-w-md rounded-lg border p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold">Tree Select Form Field</h2>
+        <Form<typeof treeFormSchema, TreeFormValues>
+          onSubmit={fn()}
+          schema={treeFormSchema}
+        >
+          {({ register, formState }) => (
+            <>
+              <Input
+                label="Product Name"
+                error={formState.errors["name"]}
+                registration={register("name")}
+                placeholder="e.g. iPhone 16 Pro"
+              />
+
+              <TreeSelect
+                label="Category Tree"
+                info="Select the category hierarchy this item belongs to."
+                error={formState.errors["category"]}
+                registration={register("category")}
+                data={treeData}
+                placeholder="Choose category..."
+              />
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+                <Button type="submit">Submit</Button>
+              </div>
+            </>
+          )}
+        </Form>
+      </div>
+    );
+  },
+};
+

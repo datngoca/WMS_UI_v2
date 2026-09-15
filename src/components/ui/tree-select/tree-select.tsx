@@ -20,13 +20,17 @@ export type TreeSelectComponentProps = TreeSelectProps & {
 };
 
 export const TreeSelect = ({
-  value,
+  value = [],
   onValueChange,
   data,
   className,
   loading,
+  placeholder,
+  disabled,
+  multiple = true,
   "aria-invalid": invalid,
 }: TreeSelectComponentProps) => {
+  const safeValue = Array.isArray(value) ? value : [];
   const ref = React.useRef<HTMLButtonElement>(null);
   const [search, setSearch] = React.useState<string | undefined>("");
   const deferredSearch = React.useDeferredValue(search);
@@ -40,48 +44,57 @@ export const TreeSelect = ({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          disabled={disabled}
           className={cn(
-            "h-fit min-h-10 items-center justify-end py-1.5 pl-1.5 pr-0 hover:bg-background",
-            invalid && "border-error-500",
+            "flex w-full h-fit min-h-9 items-center justify-between py-1.5 pl-2.5 pr-0 hover:bg-background",
+            invalid && "border-destructive focus-visible:ring-destructive",
             className,
-            value.length > 1 && "h-auto"
+            safeValue.length > 1 && "h-auto"
           )}
           ref={ref}
           aria-invalid={invalid}
         >
           <div className="relative flex grow flex-wrap items-center gap-[6px] overflow-hidden">
-            {value.length > 0 ? (
-              value.map((v) => (
+            {safeValue.length > 0 ? (
+              safeValue.map((v) => (
                 <Badge
                   key={v}
                   variant="secondary"
-                  className="gap-1.5 text-wrap rounded-sm px-1.5 py-0.5 text-left font-semibold hover:bg-indigo-50 hover:text-primary"
+                  className={cn(
+                    "text-wrap rounded-sm px-1.5 py-0.5 text-left font-semibold hover:bg-indigo-50 hover:text-primary",
+                    multiple && "gap-1.5"
+                  )}
                 >
                   {valueLabelMap.get(v) ?? v}
-                  <div
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onValueChange(value.filter((value) => value !== v));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === " " || e.key === "Enter") {
-                        onValueChange(value.filter((value) => value !== v));
-                        ref.current?.focus();
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <X size={14} />
-                  </div>
+                  {multiple && (
+                    <div
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onValueChange(safeValue.filter((value) => value !== v));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === " " || e.key === "Enter") {
+                          onValueChange(safeValue.filter((value) => value !== v));
+                          ref.current?.focus();
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <X size={14} />
+                    </div>
+                  )}
                 </Badge>
               ))
             ) : (
-              <span className="ml-1 text-sm">Placeholder</span>
+              <span className="ml-1 text-sm text-muted-foreground">
+                {placeholder ?? "Select options..."}
+              </span>
             )}
           </div>
 
-          {value.length > 0 && (
+          {safeValue.length > 0 && (
             <div
               className={cn(
                 buttonVariants({ size: "sm", variant: "ghost" }),
@@ -134,9 +147,10 @@ export const TreeSelect = ({
           )}
           {!loading && data.length > 0 && (
             <TreeView
-              value={value}
+              value={safeValue}
               onValueChange={onValueChange}
               data={data}
+              multiple={multiple}
               searchValue={deferredSearch}
             />
           )}

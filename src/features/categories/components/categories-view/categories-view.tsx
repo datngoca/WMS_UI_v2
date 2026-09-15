@@ -18,7 +18,7 @@ export const CategoriesView = () => {
 
   if (!categories) return null;
 
-  return <div className="flex gap-5 h-full min-h-0">
+  return <div className="h-full min-h-0">
     <CategoriesListTree data={categories}/>
   </div>;
 };

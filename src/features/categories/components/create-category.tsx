@@ -8,7 +8,6 @@ import {
   Form,
   FormDrawer,
   Input,
-  Select,
   Textarea,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ export const CreateCategory = ({ parent }: CreateCategoryProps) => {
     },
   });
   const onSubmit = (values: CreateCategoryInput) => {
-    const data = { ...values, parentId: parent.id ?? null };
+    const data = { ...values, parentId: parent?.id ?? null };
     console.log(data);
     createCategoryMutation.mutate({ data });
   };

@@ -1,5 +1,4 @@
 import { Spinner } from "@/components/ui/spinner";
-// import {Table} from '@/components/ui/table';
 
 import { useUsers } from "../api/get-users";
 import { Table } from "@/components/ui/table";

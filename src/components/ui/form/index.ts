@@ -7,3 +7,4 @@ export * from './switch';
 export * from './label';
 export * from './field-wrapper';
 export * from './error';
+export * from './tree-select';

@@ -13,21 +13,38 @@ type TreeViewProps = TreeSelectProps & {
 };
 
 export const TreeView = ({
-  value,
+  value = [],
   onValueChange,
   data,
   searchValue,
+  multiple = true,
 }: TreeViewProps) => {
-  const dataState = makeTreeNodeDataState(data, value, searchValue);
+  const safeValue = Array.isArray(value) ? value : [];
+  const dataState = React.useMemo(
+    () => makeTreeNodeDataState(data, safeValue, searchValue, multiple),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, JSON.stringify(safeValue), searchValue, multiple],
+  );
   const setOnCheck = useTreeSelect((state) => state.setOnCheck);
 
   const handleCheck = React.useCallback(
     (node: TreeNodeDataState) => {
+      if (!multiple) {
+        // Single select mode: selecting a node sets only this exact node
+        if (safeValue.includes(node.value)) {
+          onValueChange([]);
+        } else {
+          onValueChange([node.value]);
+        }
+        return;
+      }
+
+      // Multiple select mode
       const updatedState = handleNodeCheck(dataState, node);
       const values = getValuesFromState(updatedState);
       onValueChange(values);
     },
-    [dataState, onValueChange],
+    [multiple, safeValue, dataState, onValueChange],
   );
 
   React.useEffect(() => {

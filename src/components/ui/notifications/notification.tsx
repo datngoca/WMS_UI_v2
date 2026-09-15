@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Info, CircleAlert, CircleX, CircleCheck } from "lucide-react";
 
 const icons = {
@@ -12,13 +13,21 @@ export type NotificationProps = {
         id: string;
         type: keyof typeof icons;
         title: string;
-        message?: string
+        message?: string;
     };
     onDismiss: (id: string) => void;
-}
+};
+
 export const Notification = ({
-    notification: { id, type, title, message }, onDismiss
+    notification: { id, type, title, message },
+    onDismiss,
 }: NotificationProps) => {
+    // Auto-dismiss sau 5 giây để tránh tích lũy notifications
+    useEffect(() => {
+        const timer = setTimeout(() => onDismiss(id), 5000);
+        return () => clearTimeout(timer);
+    }, [id, onDismiss]);
+
     return (
         <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
             <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-b-lg bg-white shadow-lg ring-1 ring-black/5">
@@ -42,5 +51,5 @@ export const Notification = ({
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};

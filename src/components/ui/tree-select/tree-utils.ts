@@ -11,6 +11,7 @@ export const makeTreeNodeDataState = (
   data: Array<TreeNodeData>,
   values: Array<string> = [],
   searchValue?: string,
+  multiple: boolean = true,
 ): Array<TreeNodeDataState> => {
   const dataClone = structuredClone(data);
 
@@ -34,7 +35,9 @@ export const makeTreeNodeDataState = (
 
   const enrichNode = (node: TreeNodeDataState, parent?: TreeNodeDataState) => {
     node.parent = parent;
-    node.checked = parent?.checked || values.includes(node.value);
+    node.checked = multiple
+      ? Boolean(parent?.checked || values.includes(node.value))
+      : values.includes(node.value);
     node.visible =
       searchValue === undefined ||
       node.name.toLowerCase().includes(searchValue.toLowerCase());
@@ -153,7 +156,8 @@ export const getValuesFromState = (data: Array<TreeNodeDataState>) => {
   const getNodeValue = (node: TreeNodeDataState) => {
     if (node.checked) {
       values.push(node.value);
-    } else if (node.children) {
+    }
+    if (node.children) {
       node.children.forEach((child) => {
         getNodeValue(child);
       });

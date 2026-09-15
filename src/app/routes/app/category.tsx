@@ -11,8 +11,7 @@ export const clientLoader = (queryClient: QueryClient) => async () => {
 
 const AccountRoute = () => {
   return (
-    <ContentLayout title="Account">
-      <h1 className="text-xl">Hello Dashboard</h1>
+    <ContentLayout title="Category">
       <CategoriesView />
     </ContentLayout>
   );

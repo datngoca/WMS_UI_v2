@@ -53,7 +53,7 @@ export const CategoriesListTree = ({
 
   return (
     <section
-      className="col-span-12 lg:col-span-5 flex flex-col bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden h-full"
+      className="flex flex-col bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden h-full"
       data-purpose="tree-hierarchy-panel"
     >
       {/* Header */}

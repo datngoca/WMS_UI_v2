@@ -19,7 +19,6 @@ export const api = Axios.create({
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
   (respone) => {
-    console.log(respone);
     return respone.data;
   },
   (error) => {
@@ -34,7 +33,13 @@ api.interceptors.response.use(
       const searchParams = new URLSearchParams();
       const redirectTo =
         searchParams.get("redirectTo") || window.location.pathname;
-      window.location.href = paths.auth.login.getHref(redirectTo);
+      const loginHref = paths.auth.login.getHref(redirectTo);
+      // Guard: tránh redirect loop nếu đang ở trang login rồi
+      if (!window.location.pathname.startsWith("/auth/login")) {
+        window.location.href = loginHref;
+      }
     }
+
+    return Promise.reject(error);
   },
 );

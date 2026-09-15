@@ -13,7 +13,12 @@ export type TreeNodeDataState = Omit<TreeNodeData, "children"> & {
 };
 
 export type TreeSelectProps = {
-  value: Array<string>;
+  value?: Array<string>;
   onValueChange: (value: Array<string>) => void;
   data: Array<TreeNodeData>;
+  placeholder?: string;
+  disabled?: boolean;
+  multiple?: boolean;
 };
+
+
