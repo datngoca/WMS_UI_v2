@@ -7,12 +7,36 @@ import path from 'path';
 import { fileURLToPath } from 'node:url';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
+import basicSsl from '@vitejs/plugin-basic-ssl';
+
 const dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   base: "./",
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), basicSsl()],
+  server: {
+    host: true,
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/scanner-api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/scanner-api/, ""),
+      },
+      "/ws": {
+        target: "ws://localhost:8000",
+        ws: true,
+        changeOrigin: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(dirname, "./src"),
