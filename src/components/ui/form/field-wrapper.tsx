@@ -11,7 +11,7 @@ export type FieldWrapperProps = {
   label?: string;
   className?: string;
   children: React.ReactNode;
-  error?: FieldError | undefined;
+  error?: FieldError | { message?: string } | undefined;
   description?: React.ReactNode;
   info?: React.ReactNode;
 };

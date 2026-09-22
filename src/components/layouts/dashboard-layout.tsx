@@ -2,7 +2,7 @@ import * as React from "react";
 import { paths } from "@/config/paths";
 import { cn } from "@/utils/cn";
 import { NavLink } from "react-router-dom";
-import avatarImg from "@/assets/IMG_6321.jpg";
+import avatarImg from "@/assets/IMG_6321.JPG";
 import {
   LayoutDashboard,
   ShieldUser,
@@ -16,6 +16,7 @@ import {
   ListCollapse,
   PencilRuler,
   Menu,
+  ReceiptText,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -62,6 +63,7 @@ const navigation: SideNavigationItem[] = [
   { name: "Customer", to: paths.app.customer.getHref(), icon: UsersRound },
   { name: "Category", to: paths.app.category.getHref(), icon: ListCollapse },
   { name: "Unit", to: paths.app.unit.getHref(), icon: PencilRuler },
+  { name: "POS", to: paths.app.pos.getHref(), icon: ReceiptText },
 ];
 
 const notifications: NotificationItem[] = [
@@ -111,7 +113,7 @@ export const DashboardLayout = ({
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex h-full h-[100dvh] w-full flex-col bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-20 w-60 flex-col border-r bg-muted/40 font-mono text-muted-foreground backdrop-blur">
         <div className="flex h-14 items-center gap-3 border-b px-4">
@@ -149,9 +151,9 @@ export const DashboardLayout = ({
       </aside>
 
       {/* Main Content Layout */}
-      <div className="flex flex-col md:pl-60 min-h-screen">
+      <div className="flex flex-col md:pl-60 h-full min-h-0 flex-1 overflow-hidden">
         {/* Header (Responsive) */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
+        <header className="shrink-0 z-30 flex h-14 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
           {/* Mobile Menu & Branding */}
           <div className="flex items-center gap-2 md:hidden">
             <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -202,7 +204,7 @@ export const DashboardLayout = ({
                           "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                           isActive &&
-                            "bg-white text-primary shadow-xs font-semibold",
+                          "bg-white text-primary shadow-xs font-semibold",
                         )
                       }
                     >
@@ -244,6 +246,8 @@ export const DashboardLayout = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
+                alignOffset={-100}
+                collisionPadding={0}
                 className="w-[calc(100vw-2rem)] sm:w-80 max-w-sm"
               >
                 <DropdownMenuItem className="cursor-default focus:bg-transparent">
@@ -316,7 +320,12 @@ export const DashboardLayout = ({
                   <UserRound className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent
+                align="end"
+                alignOffset={-100}
+                collisionPadding={0}
+                className="w-48"
+              >
                 <DropdownMenuItem className="cursor-pointer">
                   Your Profile
                 </DropdownMenuItem>
@@ -330,7 +339,9 @@ export const DashboardLayout = ({
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-3 sm:p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-2 sm:p-4 md:p-6 flex flex-col min-h-0 overflow-hidden">
+          {children}
+        </main>
       </div>
     </div>
   );

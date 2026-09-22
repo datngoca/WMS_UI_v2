@@ -159,7 +159,7 @@ export const DefaultUserTable: Story = {
       {
         title: "Actions",
         field: "id",
-        Cell: ({ entry: { id } }) => {
+        Cell: () => {
           return (
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="sm">

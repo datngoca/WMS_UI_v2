@@ -76,11 +76,11 @@ const PaginationPrevious = ({
   <PaginationLink
     aria-label="Go to previous page"
     size="default"
-    className={cn("gap-1 pl-2.5", className)}
+    className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
     {...props}
   >
     <ChevronLeftIcon className="size-4" />
-    <span>Previous</span>
+    <span className="hidden sm:inline">Trước</span>
   </PaginationLink>
 );
 PaginationPrevious.displayName = "PaginationPrevious";
@@ -92,12 +92,11 @@ const PaginationNext = ({
   <PaginationLink
     aria-label="Go to next page"
     size="default"
-    className={cn("gap-1 pr-2.5", className)}
+    className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
     {...props}
   >
-    <span>Next</span>
+    <span className="hidden sm:inline">Sau</span>
     <ChevronRightIcon className="size-4" />
-    
   </PaginationLink>
 );
 
@@ -141,54 +140,63 @@ export const TablePagination = ({
 }: TablePaginationProps) => {
   const createHref = (page: number) => `${rootUrl}?page=${page}`;
   return (
-    <Pagination className="justify-end py-8">
-      <PaginationContent>
-        {currentPage > 1 && (
-          <PaginationItem>
-            <PaginationPrevious href={createHref(currentPage - 1)} />
-          </PaginationItem>
-        )}
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 sm:py-4 px-3 sm:px-4 border-t border-slate-100">
+      <div className="text-xs text-muted-foreground order-2 sm:order-1">
+        Trang <span className="font-semibold text-slate-800">{currentPage}</span> / {totalPages}
+      </div>
 
-        {currentPage > 2 && (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        )}
+      <Pagination className="justify-center sm:justify-end order-1 sm:order-2 w-auto mx-0">
+        <PaginationContent className="gap-1 sm:gap-1.5">
+          {currentPage > 1 && (
+            <PaginationItem>
+              <PaginationPrevious href={createHref(currentPage - 1)} />
+            </PaginationItem>
+          )}
 
-        {currentPage > 1 && (
-          <PaginationItem>
-            <PaginationLink href={createHref(currentPage - 1)}>
-              {currentPage - 1}
-            </PaginationLink>
-          </PaginationItem>
-        )}
+          {/* Desktop number links */}
+          <div className="hidden sm:flex items-center gap-1">
+            {currentPage > 2 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
 
-        <PaginationItem>
-          <PaginationLink href={createHref(currentPage)}>
-            {currentPage}
-          </PaginationLink>
-        </PaginationItem>
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationLink href={createHref(currentPage - 1)}>
+                  {currentPage - 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
 
-        {totalPages > currentPage && (
-          <PaginationItem>
-            <PaginationLink href={createHref(currentPage + 1)}>
-              {currentPage + 1}
-            </PaginationLink>
-          </PaginationItem>
-        )}
+            <PaginationItem>
+              <PaginationLink href={createHref(currentPage)} isActive>
+                {currentPage}
+              </PaginationLink>
+            </PaginationItem>
 
-        {totalPages > currentPage + 1 && (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        )}
+            {totalPages > currentPage && (
+              <PaginationItem>
+                <PaginationLink href={createHref(currentPage + 1)}>
+                  {currentPage + 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
 
-        {totalPages > currentPage && (
-          <PaginationItem>
-            <PaginationNext href={createHref(currentPage + 1)} />
-          </PaginationItem>
-        )}
-      </PaginationContent>
-    </Pagination>
+            {totalPages > currentPage + 1 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+          </div>
+
+          {totalPages > currentPage && (
+            <PaginationItem>
+              <PaginationNext href={createHref(currentPage + 1)} />
+            </PaginationItem>
+          )}
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
 };
