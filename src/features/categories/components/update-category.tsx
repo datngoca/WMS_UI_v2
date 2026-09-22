@@ -10,7 +10,6 @@ import {
   TreeSelect,
 } from "@/components/ui/form";
 import { useNotifications } from "@/components/ui/notifications";
-import type { TreeNodeData } from "@/components/ui/tree-select";
 import type { Category } from "@/types/api";
 
 import { useCategories } from "../api/get-categories";
@@ -19,44 +18,35 @@ import {
   updateCategoryInputSchema,
   useUpdateCategory,
 } from "../api/update-category";
-
-// Hàm đệ quy chuyển đổi Category[] sang TreeNodeData[]
-const transformCategoriesToTreeData = (
-  items: Category[] = [],
-  excludeId?: number,
-): TreeNodeData[] => {
-  return items
-    .filter((cat) => cat.id !== excludeId) // Không cho phép chọn chính nó làm cha
-    .map((cat) => ({
-      name: cat.name,
-      value: String(cat.id), // TreeNodeData yêu cầu value là string
-      children:
-        cat.children && cat.children.length > 0
-          ? transformCategoriesToTreeData(cat.children, excludeId)
-          : undefined,
-    }));
-};
+import { transformCategoriesToTreeData } from "../utils/category-tree";
 
 type UpdateCategoryProps = {
   categoryId: number;
   initialCategory?: Category;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  triggerButton?: React.ReactElement | null;
 };
 
 export const UpdateCategory = ({
   categoryId,
   initialCategory,
+  open,
+  onOpenChange,
+  triggerButton,
 }: UpdateCategoryProps) => {
   const { addNotification } = useNotifications();
 
   // Dùng hook lấy danh sách categories (tận dụng cache TanStack Query)
   const categoriesQuery = useCategories({});
-  const categories = categoriesQuery.data?.data ?? [];
+  const categories = categoriesQuery.data?.data;
 
-  // Lấy chi tiết category cần sửa (chỉ fetch nếu chưa có initialCategory)
+  // Lấy chi tiết category cần sửa (chỉ fetch nếu chưa có initialCategory và modal đang mở hoặc uncontrolled)
+  const isModalOpen = open === undefined || open;
   const categoryQuery = useCategory({
     categoryId,
     queryConfig: {
-      enabled: !initialCategory,
+      enabled: !initialCategory && isModalOpen,
     },
   });
   const category = initialCategory ?? categoryQuery.data?.data;
@@ -68,27 +58,35 @@ export const UpdateCategory = ({
           type: "success",
           title: res.message,
         });
+        onOpenChange?.(false);
       },
     },
   });
 
   // Chuyển đổi dữ liệu cây danh mục
   const treeData = React.useMemo(() => {
+    if (!isModalOpen || !categories) return [];
     return transformCategoriesToTreeData(categories, categoryId);
-  }, [categories, categoryId]);
+  }, [categories, categoryId, isModalOpen]);
+
+  const defaultTrigger = (
+    <Button size="sm">
+      <Pen className="size-4" />
+    </Button>
+  );
+
+  const formId = `update-category-${categoryId}`;
 
   return (
     <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
       isDone={updateCategoryMutation.isSuccess}
-      triggerButton={
-        <Button size="sm">
-          <Pen className="size-4" />
-        </Button>
-      }
+      triggerButton={triggerButton === null ? undefined : (triggerButton ?? defaultTrigger)}
       title="Sửa danh mục"
       submitButton={
         <Button
-          form="update-category"
+          form={formId}
           type="submit"
           size="sm"
           isLoading={updateCategoryMutation.isPending}
@@ -98,7 +96,7 @@ export const UpdateCategory = ({
       }
     >
       <Form
-        id="update-category"
+        id={formId}
         onSubmit={(values) => {
           updateCategoryMutation.mutate({
             data: {

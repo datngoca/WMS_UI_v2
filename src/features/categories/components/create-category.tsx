@@ -14,10 +14,18 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 type CreateCategoryProps = {
-  parent?: { id: number; name: string };
+  parent?: { id: number; name: string } | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  triggerButton?: React.ReactElement | null;
 };
 
-export const CreateCategory = ({ parent }: CreateCategoryProps) => {
+export const CreateCategory = ({
+  parent,
+  open,
+  onOpenChange,
+  triggerButton,
+}: CreateCategoryProps) => {
   const { addNotification } = useNotifications();
   const createCategoryMutation = useCreateCategory({
     mutationConfig: {
@@ -26,36 +34,42 @@ export const CreateCategory = ({ parent }: CreateCategoryProps) => {
           type: "success",
           title: value.message,
         });
+        onOpenChange?.(false);
       },
     },
   });
+  const formId = parent ? `create-category-${parent.id}` : "create-category-root";
+
   const onSubmit = (values: CreateCategoryInput) => {
     const data = { ...values, parentId: parent?.id ?? null };
-    console.log(data);
+    console.log("Create category data:", data);
     createCategoryMutation.mutate({ data });
   };
+
+  const defaultTriggerButton = !parent ? (
+    <Button size="sm" icon={<Plus className="size-4" />}>
+      Thêm danh mục
+    </Button>
+  ) : (
+    <Button
+      size="sm"
+      variant="outline"
+      className="hover:text-primary hover:bg-secondary"
+    >
+      <Plus className="size-3" />
+    </Button>
+  );
+
   return (
     <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
       isDone={createCategoryMutation.isSuccess}
-      triggerButton={
-        !parent ? (
-          <Button size="sm" icon={<Plus className="size-4" />}>
-            Create Discussion
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            className="hover:text-primary hover:bg-secondary"
-          >
-            <Plus className="size-3" />
-          </Button>
-        )
-      }
-      title="Create Discussion"
+      triggerButton={triggerButton === null ? undefined : (triggerButton ?? defaultTriggerButton)}
+      title={parent ? `Thêm danh mục con cho "${parent.name}"` : "Tạo danh mục mới"}
       submitButton={
         <Button
-          form="create-discussion"
+          form={formId}
           type="submit"
           size="sm"
           isLoading={createCategoryMutation.isPending}
@@ -65,7 +79,7 @@ export const CreateCategory = ({ parent }: CreateCategoryProps) => {
       }
     >
       <Form
-        id="create-discussion"
+        id={formId}
         onSubmit={onSubmit}
         schema={createCategoryInputSchema}
       >
@@ -81,7 +95,7 @@ export const CreateCategory = ({ parent }: CreateCategoryProps) => {
 
             <Textarea
               label="Description"
-              info="Optional summary of your background and responsibilities."
+              info="Optional summary of your category."
               error={formState.errors["description"]}
               registration={register("description")}
               placeholder="Tell us a little bit about category..."
@@ -91,7 +105,6 @@ export const CreateCategory = ({ parent }: CreateCategoryProps) => {
                 value={parent.name}
                 disabled
                 label="Parent"
-                registration={register("parentId")}
               />
             )}
           </>

@@ -9,11 +9,11 @@ export const clientLoader = (queryClient: QueryClient) => async () => {
   return queryClient.query(query);
 };
 
-const AccountRoute = () => {
+const CategoryRoute = () => {
   return (
-    <ContentLayout title="Category">
+    <ContentLayout title="Danh mục" noPadding className="flex-1 min-h-0">
       <CategoriesView />
     </ContentLayout>
   );
 };
-export default AccountRoute;
+export default CategoryRoute;
