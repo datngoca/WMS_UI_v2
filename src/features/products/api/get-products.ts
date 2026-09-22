@@ -27,12 +27,13 @@ export const getProductsQueryOptions = ({
 
 type UseProductsOptions = {
   page?: number;
+  size?: number;
   queryConfig?: QueryConfig<typeof getProductsQueryOptions>;
 };
 
-export const useProducts = ({ queryConfig, page }: UseProductsOptions) => {
+export const useProducts = ({ queryConfig, page, size }: UseProductsOptions = {}) => {
   return useQuery({
-    ...getProductsQueryOptions({ page }),
+    ...getProductsQueryOptions({ page, size }),
     ...queryConfig,
   });
 };
