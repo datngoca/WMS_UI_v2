@@ -49,6 +49,8 @@ export type Category = Entity<{
   description: string;
   parent: CategoryRef;
   children: Category[];
+  depth: number;
+  isOpen: boolean;
 }>;
 
 export type Unit = Entity<{
@@ -62,7 +64,6 @@ export type Product = Entity<{
   name: string;
   categories: CategoryRef[];
   description: string;
-  basePrice: number;
   specs: {
     label: string;
     value: string;
@@ -82,5 +83,7 @@ export type Product = Entity<{
     exchangeValue: number;
     price: number;
     isBaseUnit: boolean;
+    sku?: string;
+    barcode?: string;
   }[];
 }>;

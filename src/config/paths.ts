@@ -58,5 +58,9 @@ export const paths = {
       path: "/app/unit",
       getHref: () => "/app/unit",
     },
+    pos: {
+      path: "/app/pos",
+      getHref: () => "/app/pos",
+    }
   },
 } as const;

@@ -12,8 +12,25 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
+const getBaseUrl = () => {
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    // Tránh lỗi Mixed Content khi web chạy trên HTTPS: dùng proxy Vite /api/
+    return "/api/";
+  }
+  let url = env.API_URL;
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    url = url.replace(/localhost|127\.0\.0\.1/, window.location.hostname);
+  }
+  return url.endsWith("/") ? `${url}api/` : `${url}/api/`;
+};
+
 export const api = Axios.create({
-  baseURL: env.API_URL + "/api/",
+  baseURL: getBaseUrl(),
 });
 
 api.interceptors.request.use(authRequestInterceptor);
