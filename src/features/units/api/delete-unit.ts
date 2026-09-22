@@ -11,7 +11,7 @@ export const deleteUnit = ({
 }: {
   unitId: number;
 }): Promise<ApiResponse<Unit>> => {
-  return api.delete(`/unit/${unitId}`);
+  return api.delete(`/units/${unitId}`);
 };
 
 type UseDeleteUnitOptions = {

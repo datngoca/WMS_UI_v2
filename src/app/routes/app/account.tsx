@@ -11,9 +11,12 @@ export const clientLoader = (queryClient: QueryClient) => async () => {
 
 const AccountRoute = () => {
   return (
-    <ContentLayout title="Account">
-      {/* <h1 className="text-xl">Hello Dashboard</h1> */}
-      <UsersList />
+    <ContentLayout title="Tài khoản" className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <UsersList />
+        </div>
+      </div>
     </ContentLayout>
   );
 };

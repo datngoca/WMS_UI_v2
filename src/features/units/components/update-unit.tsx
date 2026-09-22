@@ -45,7 +45,14 @@ export const UpdateUnit = ({ unitId }: UpdateUnitProps) => {
     >
       <Form
         onSubmit={(values) => {
-          updateUnitMutation.mutate({ data: values, unitId });
+          updateUnitMutation.mutate({
+            data: {
+              name: values.name || "",
+              code: values.code || "",
+              description: values.description || null,
+            },
+            unitId,
+          });
         }}
         schema={updateUnitInputSchema}
         options={{

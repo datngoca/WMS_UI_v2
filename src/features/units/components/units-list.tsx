@@ -3,8 +3,6 @@ import { useUnits } from "@/features/units/api/get-units";
 import { Table } from "@/components/ui/table";
 import { paths } from "@/config/paths";
 import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Pen, Trash } from "lucide-react";
 import { UpdateUnit } from "./update-unit";
 import { DeleteUnit } from "./delete-unit";
 
