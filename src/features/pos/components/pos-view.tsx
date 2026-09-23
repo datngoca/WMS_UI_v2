@@ -29,9 +29,11 @@ import type { Product } from "@/types/api";
 import type { PosCartItem, PaymentMethod, PosOrder } from "../types";
 import { PosScannerModal } from "./pos-scanner-modal";
 import { PosReceiptModal } from "./pos-receipt-modal";
+import { useCreateOrder } from "@/features/orders/api/create-order";
 
 export const PosView = () => {
   const { addNotification } = useNotifications();
+  const createOrderMutation = useCreateOrder();
 
   // Queries
   const productsQuery = useProducts({ page: 1, size: 200 });
@@ -449,7 +451,7 @@ export const PosView = () => {
 
   // Execute Checkout
   const handleCheckout = () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || createOrderMutation.isPending) return;
 
     if (paymentMethod === "cash" && effectiveCustomerMoney < total) {
       addNotification({
@@ -460,34 +462,50 @@ export const PosView = () => {
       return;
     }
 
-    const orderNumber = `HD-${Date.now().toString().slice(-6)}`;
-    const newOrder: PosOrder = {
-      orderCode: orderNumber,
-      createdAt: new Date(),
-      items: [...cart],
-      subtotal,
-      discountType,
-      discountValue,
-      discountAmount,
-      taxRate,
-      taxAmount,
-      total,
-      paymentMethod,
-      customerMoney: paymentMethod === "cash" ? effectiveCustomerMoney : total,
-      changeMoney,
-      cashierName: "Admin Harry Ngoc",
-    };
+    createOrderMutation.mutate(
+      {
+        data: {
+          customerName: "Khách lẻ tại quầy",
+          note: `POS - Thanh toán ${paymentMethod === "cash" ? "tiền mặt" : paymentMethod === "qr" ? "chuyển khoản QR" : "thẻ"}`,
+          items: cart.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.price,
+          })),
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const savedOrder = res.data;
+          const orderNumber =
+            savedOrder?.orderCode || `HD-${Date.now().toString().slice(-6)}`;
+          const newOrder: PosOrder = {
+            orderCode: orderNumber,
+            createdAt: savedOrder?.createdAt
+              ? new Date(savedOrder.createdAt)
+              : new Date(),
+            items: [...cart],
+            subtotal,
+            discountType,
+            discountValue,
+            discountAmount,
+            taxRate,
+            taxAmount,
+            total,
+            paymentMethod,
+            customerMoney: paymentMethod === "cash" ? effectiveCustomerMoney : total,
+            changeMoney,
+            cashierName: "Admin Harry Ngoc",
+          };
 
-    setCompletedOrder(newOrder);
-    setCart([]);
-    setIsCustomCustomerMoney(false);
-    setCustomerMoneyInput("");
-    setDiscountValue(0);
-    addNotification({
-      type: "success",
-      title: "Thanh toán thành công!",
-      message: `Đơn hàng ${orderNumber} đã hoàn tất`,
-    });
+          setCompletedOrder(newOrder);
+          setCart([]);
+          setIsCustomCustomerMoney(false);
+          setCustomerMoneyInput("");
+          setDiscountValue(0);
+        },
+      },
+    );
   };
 
   const handleStartNewOrder = () => {
@@ -1103,7 +1121,8 @@ export const PosView = () => {
           <Button
             type="button"
             size="lg"
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || createOrderMutation.isPending}
+            isLoading={createOrderMutation.isPending}
             onClick={handleCheckout}
             className="w-full h-11 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
