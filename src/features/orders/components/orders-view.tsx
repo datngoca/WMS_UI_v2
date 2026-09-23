@@ -54,7 +54,7 @@ const statusBadges: Record<
 };
 
 export const OrdersView = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const page = +(searchParams.get("page") || 1);
@@ -78,8 +78,8 @@ export const OrdersView = () => {
     return orders.filter((order) => {
       const matchSearch = searchTerm
         ? (order.orderCode || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (order.customerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (order.customerPhone || "").includes(searchTerm)
+        (order.customerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.customerPhone || "").includes(searchTerm)
         : true;
 
       const matchStatus =

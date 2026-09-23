@@ -1,3 +1,4 @@
+
 export type Meta = {
   page: number;
   size: number;
@@ -64,6 +65,7 @@ export type Product = Entity<{
   name: string;
   categories: CategoryRef[];
   description: string;
+  imageUrl: string;
   specs: {
     label: string;
     value: string;

@@ -42,7 +42,6 @@ const sizeClasses: Record<NonNullable<FormDrawerProps["size"]>, string> = {
 export const FormDrawer = ({
   title,
   description,
-  icon,
   children,
   isDone,
   triggerButton,

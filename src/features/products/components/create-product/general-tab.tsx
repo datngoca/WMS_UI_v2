@@ -1,14 +1,10 @@
-import * as React from "react";
-import { Sparkles, ScanBarcode, DownloadCloud, Loader2, Image as ImageIcon, ExternalLink, Trash2, Wand2 } from "lucide-react";
+import { ScanBarcode, Image as ImageIcon, ExternalLink, Trash2, Wand2 } from "lucide-react";
 
 import { useNotifications } from "@/components/ui/notifications";
-import { useQueryClient } from "@tanstack/react-query";
-import { Input, Label, Textarea, TreeSelect } from "@/components/ui/form";
+import { Input, Label, TreeSelect } from "@/components/ui/form";
 import { cn } from "@/utils/cn";
 import { cleanHtmlToText } from "@/utils/format";
 
-import { generateSku } from "../../api/create-product";
-import { lookupProductBySku, extractSkuFromText } from "../../api/lookup-scanner";
 import type { GeneralTabProps } from "./types";
 
 export const GeneralTab = ({
@@ -20,14 +16,10 @@ export const GeneralTab = ({
   onOpenScanner,
   isScrapingLotte = false,
   galleryImages: propGalleryImages,
-  setGalleryImages: propSetGalleryImages,
 }: GeneralTabProps) => {
   const { addNotifications, addNotification } = useNotifications() as any;
   const notify = addNotification || addNotifications;
-  const [isGeneratingSku, setIsGeneratingSku] = React.useState(false);
-  const [localGalleryImages, setLocalGalleryImages] = React.useState<string[]>([]);
-  const galleryImages = propGalleryImages ?? localGalleryImages;
-  const setGalleryImages = propSetGalleryImages ?? setLocalGalleryImages;
+  const galleryImages = propGalleryImages;
   const currentImageUrl = watch("imageUrl");
   const currentDescription = watch("description") || "";
   const hasHtmlInDescription = /<[a-z][\s\S]*>/i.test(currentDescription);
@@ -42,40 +34,7 @@ export const GeneralTab = ({
     });
   };
 
-  const handleGenerateSku = async () => {
-    const currentName = watch("name");
-    try {
-      setIsGeneratingSku(true);
-      const res = await generateSku({ name: currentName || "" });
-      if (res?.data?.sku) {
-        setValue("sku", res.data.sku, { shouldValidate: true, shouldDirty: true });
-        addNotification({
-          type: "info",
-          title: `Đã sinh mã: ${res.data.sku}`,
-        });
-      }
-    } catch {
-      // Fallback cục bộ
-      const localSlug =
-        (currentName || "SAN-PHAM")
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[đĐ]/g, "D")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .toUpperCase()
-          .slice(0, 40) || "SAN-PHAM";
-      const fallbackSku = `SP-${localSlug}-00001`;
-      setValue("sku", fallbackSku, { shouldValidate: true, shouldDirty: true });
-      addNotification({
-        type: "info",
-        title: `Đã sinh mã: ${fallbackSku}`,
-      });
-    } finally {
-      setIsGeneratingSku(false);
-    }
-  };
+
 
   return (
     <div className="space-y-4">
