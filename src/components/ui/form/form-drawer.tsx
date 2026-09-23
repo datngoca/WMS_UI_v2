@@ -99,23 +99,16 @@ export const FormDrawer = ({
         )}
       >
         {/* Sticky Mobile-Friendly Header */}
-        <DrawerHeader className="px-4 py-3.5 sm:px-6 sm:py-4 pr-12 sm:pr-14 border-b border-border/80 bg-background/95 backdrop-blur-md flex-shrink-0 flex items-center justify-between gap-3 text-left">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {icon && (
-              <div className="flex size-9 sm:size-10 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0 shadow-2xs">
-                {icon}
-              </div>
+        <DrawerHeader className="pl-4 pr-10 py-3.5 sm:pl-6 sm:pr-12 sm:py-4 border-b border-border/80 bg-background/95 backdrop-blur-md flex-shrink-0 flex items-start gap-3 text-left">
+          <div className="flex flex-col min-w-0 flex-1">
+            <DrawerTitle className="text-sm sm:text-base font-semibold text-foreground leading-snug break-words">
+              {title}
+            </DrawerTitle>
+            {description && (
+              <DrawerDescription className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed break-words">
+                {description}
+              </DrawerDescription>
             )}
-            <div className="flex flex-col min-w-0">
-              <DrawerTitle className="text-sm sm:text-base font-semibold text-foreground truncate">
-                {title}
-              </DrawerTitle>
-              {description && (
-                <DrawerDescription className="text-[11px] text-muted-foreground truncate mt-0.5">
-                  {description}
-                </DrawerDescription>
-              )}
-            </div>
           </div>
         </DrawerHeader>
 

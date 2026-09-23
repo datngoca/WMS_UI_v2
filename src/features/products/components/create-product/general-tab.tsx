@@ -18,13 +18,16 @@ export const GeneralTab = ({
   watch,
   categoriesTreeData,
   onOpenScanner,
+  isScrapingLotte = false,
+  galleryImages: propGalleryImages,
+  setGalleryImages: propSetGalleryImages,
 }: GeneralTabProps) => {
   const { addNotifications, addNotification } = useNotifications() as any;
   const notify = addNotification || addNotifications;
-  const queryClient = useQueryClient();
   const [isGeneratingSku, setIsGeneratingSku] = React.useState(false);
-  const [isLoadingLotte, setIsLoadingLotte] = React.useState(false);
-  const [galleryImages, setGalleryImages] = React.useState<string[]>([]);
+  const [localGalleryImages, setLocalGalleryImages] = React.useState<string[]>([]);
+  const galleryImages = propGalleryImages ?? localGalleryImages;
+  const setGalleryImages = propSetGalleryImages ?? setLocalGalleryImages;
   const currentImageUrl = watch("imageUrl");
   const currentDescription = watch("description") || "";
   const hasHtmlInDescription = /<[a-z][\s\S]*>/i.test(currentDescription);
@@ -74,96 +77,6 @@ export const GeneralTab = ({
     }
   };
 
-  const handleFetchLotteMart = async () => {
-    const rawSku = watch("sku")?.trim();
-    if (!rawSku) {
-      addNotification({
-        type: "warning",
-        title: "Chưa có mã SKU",
-        message: "Vui lòng nhập mã SKU hoặc bấm 'Quét mã' trước khi lấy dữ liệu Lotte Mart",
-      });
-      return;
-    }
-
-    const currentSku = extractSkuFromText(rawSku);
-    if (currentSku !== rawSku) {
-      setValue("sku", currentSku, { shouldValidate: true, shouldDirty: true });
-    }
-
-    try {
-      setIsLoadingLotte(true);
-      const data = await lookupProductBySku(currentSku);
-
-      if (data?.status === "SUCCESS" && data?.product) {
-        const prod = data.product;
-
-        // Tự động làm mới cache categories & units khi service đã tạo mới vào DB
-        queryClient.invalidateQueries({ queryKey: ["categories"] });
-        queryClient.invalidateQueries({ queryKey: ["units"] });
-
-        // 1. Tên sản phẩm
-        if (prod.name) {
-          setValue("name", prod.name, { shouldValidate: true, shouldDirty: true });
-        }
-
-        // 2. Ảnh sản phẩm & thư viện ảnh
-        if (prod.imageUrl) {
-          setValue("imageUrl", prod.imageUrl, { shouldValidate: true, shouldDirty: true });
-        }
-        if (prod.images && Array.isArray(prod.images) && prod.images.length > 0) {
-          setGalleryImages(prod.images);
-        } else if (prod.imageUrl) {
-          setGalleryImages([prod.imageUrl]);
-        }
-
-        // 3. Mô tả chi tiết
-        if (prod.description) {
-          setValue("description", prod.description, { shouldValidate: true, shouldDirty: true });
-        }
-
-        // 3. Danh mục ngành hàng
-        if (prod.categories && Array.isArray(prod.categories) && prod.categories.length > 0) {
-          setValue("categories", prod.categories, { shouldValidate: true, shouldDirty: true });
-        }
-
-        // 4. Đơn vị quy cách & giá (productUnits: lẻ, lốc, thùng)
-        if (prod.productUnits && Array.isArray(prod.productUnits) && prod.productUnits.length > 0) {
-          setValue("productUnits", prod.productUnits, { shouldValidate: true, shouldDirty: true });
-        }
-
-        // 5. Thông số nổi bật (specs)
-        if (prod.specs && Array.isArray(prod.specs) && prod.specs.length > 0) {
-          setValue("specs", prod.specs, { shouldValidate: true, shouldDirty: true });
-        }
-
-        // 6. Tùy chọn (options)
-        if (prod.options && Array.isArray(prod.options) && prod.options.length > 0) {
-          setValue("options", prod.options, { shouldValidate: true, shouldDirty: true });
-        }
-
-        addNotification({
-          type: "success",
-          title: "Đã lấy dữ liệu từ LOTTE Mart!",
-          message: `Sản phẩm: ${prod.name} (${prod.productUnits?.length || 1} đơn vị quy cách)`,
-        });
-      } else {
-        addNotification({
-          type: "warning",
-          title: "Không tìm thấy trên LOTTE Mart",
-          message: data?.message || `Không có dữ liệu cho mã SKU: ${currentSku}`,
-        });
-      }
-    } catch (err: any) {
-      addNotification({
-        type: "error",
-        title: "Lỗi kết nối Scanner Service",
-        message: err?.message || "Không thể kết nối đến Scanner Python (FastAPI cổng 8000). Hãy đảm bảo service đang chạy!",
-      });
-    } finally {
-      setIsLoadingLotte(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -174,34 +87,20 @@ export const GeneralTab = ({
           registration={register("name")}
           placeholder="VD: Bánh quy bơ Danisa 454g"
         />
-        <div className="flex items-center justify-between gap-2">
-          <Input
-            {...register("sku")}
-            className={cn(
-              "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-              errors.sku && "border-destructive focus-visible:ring-destructive",
-            )}
-            placeholder="VD: 8936025772771 (hoặc để trống)"
-          />
-          {errors.sku?.message && (
-            <p className="text-[0.8rem] font-medium text-destructive">
-              {errors.sku.message}
-            </p>
-          )}
-          <div className="flex items-center gap-2.5">
-            {onOpenScanner && (
-              <button
-                type="button"
-                onClick={() => onOpenScanner("sku", "Mã sản phẩm (SKU)")}
-                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
-                title="Bật camera quét mã vạch hoặc mã QR để điền SKU"
-              >
-                <ScanBarcode className="size-3.5" />
-                <span>Quét mã</span>
-              </button>
-            )}
+        {onOpenScanner && (
+          <div className="flex flex-col justify-end">
+            <button
+              type="button"
+              onClick={() => onOpenScanner("sku", "Mã sản phẩm (SKU)")}
+              disabled={isScrapingLotte}
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-md border border-emerald-300 bg-emerald-50 text-sm font-medium text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+              title="Bật camera quét mã vạch hoặc mã QR để tự động cào dữ liệu từ Lotte Mart"
+            >
+              <ScanBarcode className="size-4" />
+              <span>Quét mã & tự động điền</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Hình ảnh sản phẩm & Gallery */}
@@ -236,42 +135,51 @@ export const GeneralTab = ({
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <input
-            {...register("imageUrl")}
-            placeholder="URL ảnh sản phẩm (VD: https://... hoặc tự động điền khi quét/lấy từ LOTTE Mart)"
-            className={cn(
-              "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-              errors.imageUrl && "border-destructive focus-visible:ring-destructive",
-            )}
-          />
-          {errors.imageUrl?.message && (
-            <p className="text-[0.8rem] font-medium text-destructive">
-              {errors.imageUrl.message}
-            </p>
-          )}
-        </div>
-
-        {/* Visual Preview & Gallery Selector */}
-        {currentImageUrl ? (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-1">
-            <div className="relative size-24 rounded-lg overflow-hidden border bg-white shadow-xs shrink-0 flex items-center justify-center">
+        <div className="flex items-start gap-3.5 pt-0.5">
+          {/* Ảnh xem trước bên hông */}
+          <div className="relative size-20 sm:size-24 rounded-xl border bg-white dark:bg-card shadow-xs shrink-0 flex items-center justify-center overflow-hidden">
+            {currentImageUrl ? (
               <img
                 src={currentImageUrl}
                 alt="Product Preview"
-                className="w-full h-full object-contain p-1"
+                className="w-full h-full object-contain p-1.5 transition-transform hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = "none";
                 }}
               />
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground/60">
+                <ImageIcon className="size-6 sm:size-7 stroke-[1.5]" />
+                <span className="text-[10px] mt-1 text-muted-foreground/80 font-medium">Chưa có ảnh</span>
+              </div>
+            )}
+          </div>
+
+          {/* Ô nhập URL và Thư viện ảnh bên cạnh */}
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="space-y-1">
+              <input
+                {...register("imageUrl")}
+                placeholder="Dán URL ảnh hoặc quét barcode để tự động điền..."
+                className={cn(
+                  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                  errors.imageUrl && "border-destructive focus-visible:ring-destructive",
+                )}
+              />
+              {errors.imageUrl?.message && (
+                <p className="text-[0.8rem] font-medium text-destructive">
+                  {errors.imageUrl.message}
+                </p>
+              )}
             </div>
 
-            {galleryImages.length > 1 && (
-              <div className="space-y-1.5 w-full">
+            {/* Gallery thumbnails nếu cào được nhiều ảnh */}
+            {galleryImages.length > 1 ? (
+              <div className="space-y-1">
                 <p className="text-[11px] font-medium text-muted-foreground">
-                  Thư viện ảnh ({galleryImages.length} ảnh - bấm để chọn ảnh đại diện):
+                  Thư viện ({galleryImages.length} ảnh - bấm để chọn ảnh đại diện):
                 </p>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 max-w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {galleryImages.map((img, idx) => {
                     const isSelected = img === currentImageUrl;
                     return (
@@ -280,10 +188,10 @@ export const GeneralTab = ({
                         type="button"
                         onClick={() => setValue("imageUrl", img, { shouldValidate: true, shouldDirty: true })}
                         className={cn(
-                          "relative size-14 rounded-md overflow-hidden border p-0.5 shrink-0 bg-white transition-all cursor-pointer",
+                          "relative size-11 sm:size-12 rounded-lg overflow-hidden border p-0.5 shrink-0 bg-white transition-all cursor-pointer",
                           isSelected
-                            ? "border-primary ring-2 ring-primary/30"
-                            : "border-border hover:border-primary/50 opacity-70 hover:opacity-100",
+                            ? "border-primary ring-2 ring-primary/40 shadow-xs"
+                            : "border-border hover:border-primary/50 opacity-60 hover:opacity-100",
                         )}
                         title={`Chọn ảnh ${idx + 1}`}
                       >
@@ -297,16 +205,13 @@ export const GeneralTab = ({
                   })}
                 </div>
               </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground/80 italic">
+                * Có thể dán đường link ảnh trực tiếp hoặc quét mã barcode để tự động tải ảnh.
+              </p>
             )}
           </div>
-        ) : (
-          <div className="flex items-center gap-2.5 p-3 rounded-lg border border-dashed bg-muted/20 text-xs text-muted-foreground">
-            <ImageIcon className="size-5 text-muted-foreground/60 shrink-0" />
-            <span>
-              Chưa có hình ảnh. Bạn có thể nhập URL ảnh ở trên hoặc bấm <strong>&quot;Lấy từ Lotte Mart&quot;</strong> để tự động tải ảnh sản phẩm.
-            </span>
-          </div>
-        )}
+        </div>
       </div>
 
       <TreeSelect

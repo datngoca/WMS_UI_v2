@@ -31,6 +31,9 @@ export type GeneralTabProps = FormTabBaseProps & {
   setValue: UseFormSetValue<CreateProductInput>;
   watch: UseFormWatch<CreateProductInput>;
   categoriesTreeData: ReturnType<typeof transformCategoriesToTreeData>;
+  isScrapingLotte?: boolean;
+  galleryImages?: string[];
+  setGalleryImages?: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
 export type UnitsTabProps = FormTabBaseProps & {

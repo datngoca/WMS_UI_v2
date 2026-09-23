@@ -7,7 +7,7 @@ import {
   type UseFormSetValue,
   type UseFormWatch,
 } from "react-hook-form";
-import { Package, Layers, FileText, SlidersHorizontal } from "lucide-react";
+import { Package, Layers, FileText, SlidersHorizontal, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/components/ui/notifications";
@@ -52,6 +52,24 @@ export const ProductFormContent = ({
     fieldName: string;
     label: string;
   } | null>(null);
+
+  const [scrapingSku, setScrapingSku] = React.useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = React.useState<string[]>([]);
+  const isScrapingLotte = Boolean(scrapingSku);
+
+  // Chặn toàn bộ sự kiện bàn phím (kể cả phím ESC đóng drawer) khi đang cào dữ liệu
+  React.useEffect(() => {
+    if (isScrapingLotte) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      window.addEventListener("keydown", handleKeyDown, { capture: true });
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      };
+    }
+  }, [isScrapingLotte]);
 
   const handleOpenScanner = React.useCallback(
     (fieldName: string, label: string) => {
@@ -105,16 +123,23 @@ export const ProductFormContent = ({
   const queryClient = useQueryClient();
 
   const fetchAndFillFromLotte = React.useCallback(
-    async (sku: string) => {
-      const cleanSku = sku.trim();
-      if (!cleanSku) return;
+    async (sku?: string) => {
+      const targetSku = sku || watch("sku");
+      const cleanSku = extractSkuFromText(targetSku?.trim() || "");
+      if (!cleanSku) {
+        addNotification({
+          type: "warning",
+          title: "Chưa có mã SKU",
+          message: "Vui lòng nhập mã SKU hoặc quét mã trước khi lấy dữ liệu Lotte Mart",
+        });
+        return;
+      }
+
+      // Đảm bảo trường SKU hiển thị mã sạch
+      setValue("sku", cleanSku, { shouldValidate: true, shouldDirty: true });
 
       try {
-        addNotification({
-          type: "info",
-          title: "Đang tra cứu Lotte Mart...",
-          message: `Mã SKU: ${cleanSku}`,
-        });
+        setScrapingSku(cleanSku);
 
         const data = await lookupProductBySku(cleanSku);
 
@@ -130,6 +155,11 @@ export const ProductFormContent = ({
           }
           if (prod.imageUrl) {
             setValue("imageUrl", prod.imageUrl, { shouldValidate: true, shouldDirty: true });
+          }
+          if (prod.images && Array.isArray(prod.images) && prod.images.length > 0) {
+            setGalleryImages(prod.images);
+          } else if (prod.imageUrl) {
+            setGalleryImages([prod.imageUrl]);
           }
           if (prod.description) {
             setValue("description", prod.description, { shouldValidate: true, shouldDirty: true });
@@ -165,15 +195,17 @@ export const ProductFormContent = ({
           title: "Không thể kết nối Scanner Service",
           message: err?.message || "Hãy đảm bảo Scanner Python (cổng 8000) đang chạy. Bạn có thể tự nhập thông tin thủ công.",
         });
+      } finally {
+        setScrapingSku(null);
       }
     },
-    [addNotification, setValue, queryClient],
+    [addNotification, setValue, watch, queryClient],
   );
 
   return (
     <div className="space-y-4">
-      {/* Mobile-Friendly Segmented Tab Bar */}
-      <div className="flex border-b border-border/80 p-1 bg-muted/40 rounded-lg gap-1 overflow-x-auto">
+      {/* Segmented Tab Bar */}
+      <div className="flex items-center p-1 bg-muted/60 rounded-xl border border-border/60 gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -183,24 +215,24 @@ export const ProductFormContent = ({
               type="button"
               onClick={() => onTabChange(tab.key)}
               className={cn(
-                "flex-1 min-w-[90px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer",
+                "flex-1 min-w-fit flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer select-none",
                 isActive
-                  ? "bg-white text-primary shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                  ? "bg-background text-primary shadow-xs font-semibold border border-border/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/40",
               )}
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3.5 shrink-0" />
               <span>{tab.label}</span>
               {typeof tab.count === "number" && tab.count > 0 && (
                 <Badge
                   variant={isActive ? "default" : "secondary"}
-                  className="px-1.5 py-0 text-[10px] h-3.5"
+                  className="px-1.5 py-0 text-[10px] h-3.5 shrink-0 font-normal"
                 >
                   {tab.count}
                 </Badge>
               )}
               {tab.hasError && (
-                <span className="size-1.5 rounded-full bg-destructive animate-pulse" />
+                <span className="size-1.5 rounded-full bg-destructive animate-pulse shrink-0" />
               )}
             </button>
           );
@@ -219,6 +251,9 @@ export const ProductFormContent = ({
             watch={watch}
             categoriesTreeData={categoriesTreeData}
             onOpenScanner={handleOpenScanner}
+            isScrapingLotte={isScrapingLotte}
+            galleryImages={galleryImages}
+            setGalleryImages={setGalleryImages}
           />
         </div>
 
@@ -288,6 +323,82 @@ export const ProductFormContent = ({
           }
         }}
       />
+
+      {/* Blocking Spinner Overlay when scraping LOTTE Mart */}
+      {isScrapingLotte && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Đang cào dữ liệu LOTTE Mart"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-all select-none cursor-wait p-4 animate-in fade-in-0 duration-200"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <div
+            className="relative w-full max-w-md p-6 sm:p-8 bg-card border border-border/80 shadow-2xl rounded-2xl flex flex-col items-center text-center space-y-5 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ambient Animated Spinner */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute size-20 rounded-full bg-rose-500/20 blur-xl animate-pulse" />
+              <div className="relative size-16 rounded-full border-4 border-rose-500/20 border-t-rose-600 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="size-6 text-rose-600 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Badge & Title */}
+            <div className="space-y-1.5 flex flex-col items-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                <span className="size-2 rounded-full bg-rose-600 animate-ping" />
+                <span>LOTTE Mart Product Scraper</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-foreground tracking-tight pt-1">
+                Đang cào dữ liệu từ LOTTE Mart...
+              </h3>
+              {scrapingSku && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/80 border border-border text-xs font-mono text-foreground font-medium">
+                  <span className="text-muted-foreground font-sans">Mã SKU:</span>
+                  <span>{scrapingSku}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Step Indicators */}
+            <div className="w-full bg-muted/40 rounded-xl p-3.5 border text-left text-xs space-y-2 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 font-semibold text-[10px]">
+                  1
+                </span>
+                <span>Tìm kiếm & đồng bộ thông tin từ LOTTE Mart</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 font-semibold text-[10px]">
+                  2
+                </span>
+                <span>Tự động phân tách quy cách (thùng, lốc, lẻ)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 font-semibold text-[10px]">
+                  3
+                </span>
+                <span>Điền hình ảnh, giá, mô tả và danh mục vào form</span>
+              </div>
+            </div>
+
+            {/* Blocking Warning */}
+            <p className="text-[11px] text-muted-foreground/80 leading-relaxed italic">
+              * Hệ thống đang xử lý và tạm thời khóa các thao tác trên màn hình để đảm bảo toàn vẹn dữ liệu. Vui lòng đợi trong giây lát...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -56,6 +56,151 @@ export const ProductList = ({ onProductPrefetch }: ProductsListProps = {}) => {
       )
     : allProducts;
 
+  const renderProductCard = React.useCallback(
+    (product: Product) => {
+      const baseUnit =
+        product.productUnits?.find((u) => u.isBaseUnit) || product.productUnits?.[0];
+      const totalUnits = product.productUnits?.length || 0;
+      const totalSpecs = product.specs?.length || 0;
+      const totalOptions = product.options?.length || 0;
+
+      return (
+        <div
+          className="group rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:shadow-xs hover:border-primary/40 transition-all space-y-3"
+          onMouseEnter={() => onProductPrefetch?.(product.id)}
+        >
+          {/* Top Section: Ảnh + Tên + SKU + Nút thao tác */}
+          <div className="flex items-start gap-3">
+            {/* Ảnh sản phẩm thật */}
+            <div className="relative size-16 rounded-xl border border-slate-200/80 bg-slate-50/80 p-1 shrink-0 flex items-center justify-center overflow-hidden">
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-full h-full object-contain transition-transform group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="size-full flex items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Package className="size-6" />
+                </div>
+              )}
+            </div>
+
+            {/* Cột Tên sản phẩm, SKU và Nút xem / sửa */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex items-start justify-between gap-1.5">
+                <h4
+                  className="font-semibold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-2"
+                  title={product.name}
+                >
+                  {product.name}
+                </h4>
+
+                {/* Các nút thao tác nhỏ gọn ở góc trên phải */}
+                <div className="flex items-center gap-0.5 shrink-0 -mt-0.5">
+                  <ProductView
+                    product={product}
+                    triggerButton={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-md cursor-pointer"
+                        title="Xem chi tiết sản phẩm"
+                      >
+                        <Eye className="size-3.5" />
+                      </Button>
+                    }
+                  />
+                  <UpdateProduct
+                    productId={product.id}
+                    initialProduct={product}
+                  />
+                </div>
+              </div>
+
+              {/* Mã SKU & Danh mục */}
+              <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                <span className="font-mono text-[11px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">
+                  {product.sku}
+                </span>
+                {product.categories && product.categories.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-normal px-1.5 py-0.5 bg-slate-100 text-slate-700 max-w-[140px] truncate"
+                  >
+                    <Tag className="size-2.5 mr-1 text-slate-400 shrink-0" />
+                    <span className="truncate">{product.categories[0].name}</span>
+                    {product.categories.length > 1 && (
+                      <span className="ml-1 text-slate-400 shrink-0">+{product.categories.length - 1}</span>
+                    )}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Phần giữa: Giá bán nổi bật & Đơn vị tính */}
+          <div className="flex items-baseline justify-between pt-2.5 border-t border-slate-100">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm sm:text-base font-bold text-emerald-600">
+                {baseUnit ? formatCurrency(baseUnit.price) : "Chưa đặt giá"}
+              </span>
+              {baseUnit && (
+                <span className="text-xs text-muted-foreground font-normal">
+                  / {baseUnit.unit?.name || "Đơn vị"}
+                </span>
+              )}
+            </div>
+
+            {totalUnits > 1 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                +{totalUnits - 1} quy đổi
+              </span>
+            )}
+          </div>
+
+          {/* Phần chân thẻ: Quy cách, Biến thể & Ngày tạo */}
+          <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {totalUnits > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700"
+                  title={`${totalUnits} đơn vị quy đổi`}
+                >
+                  <Layers className="size-3 text-slate-400" />
+                  <span>{totalUnits} ĐV</span>
+                </span>
+              )}
+              {totalOptions > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700"
+                  title={`${totalOptions} nhóm tùy chọn`}
+                >
+                  <SlidersHorizontal className="size-3 text-slate-400" />
+                  <span>{totalOptions} Tùy chọn</span>
+                </span>
+              )}
+              {totalSpecs > 0 && totalOptions === 0 && (
+                <span className="text-[11px] text-muted-foreground">
+                  {totalSpecs} thông số
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0 text-[10px] text-muted-foreground/80">
+              <Calendar className="size-3 text-muted-foreground/60" />
+              <span>{formatDate(product.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      );
+    },
+    [onProductPrefetch],
+  );
+
   return (
     <div className="flex flex-col min-h-0 space-y-1.5 sm:space-y-3 flex-1 overflow-hidden">
       {/* Top filter / search bar */}
@@ -84,6 +229,7 @@ export const ProductList = ({ onProductPrefetch }: ProductsListProps = {}) => {
         <div className="flex-1 min-h-0 overflow-y-auto">
           <Table<Product>
           data={filteredProducts}
+          renderMobileCard={renderProductCard}
           columns={[
             {
               title: "SẢN PHẨM & MÃ SKU",
@@ -94,11 +240,22 @@ export const ProductList = ({ onProductPrefetch }: ProductsListProps = {}) => {
                     className="flex items-center gap-3 min-w-[220px]"
                     onMouseEnter={() => onProductPrefetch?.(entry.id)}
                   >
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                      <Package className="size-4" />
+                    <div className="relative size-10 rounded-lg border border-slate-200/80 bg-white p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
+                      {entry.imageUrl ? (
+                        <img
+                          src={entry.imageUrl}
+                          alt={entry.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <Package className="size-5 text-primary/70" />
+                      )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-xs text-slate-900 line-clamp-1">
+                      <span className="font-semibold text-xs text-slate-900 line-clamp-1" title={entry.name}>
                         {entry.name}
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">

@@ -194,8 +194,8 @@ export const ProductDetailContent = ({ product }: { product: Product }) => {
                 </div>
             </div>
 
-            {/* Mobile-Friendly Segmented Tab Bar */}
-            <div className="flex border-b border-border/80 p-1 bg-muted/40 rounded-lg gap-1 overflow-x-auto">
+            {/* Segmented Tab Bar */}
+            <div className="flex items-center p-1 bg-muted/60 rounded-xl border border-border/60 gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.key;
@@ -205,18 +205,18 @@ export const ProductDetailContent = ({ product }: { product: Product }) => {
                             type="button"
                             onClick={() => setActiveTab(tab.key)}
                             className={cn(
-                                "flex-1 min-w-[90px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer",
+                                "flex-1 min-w-fit flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer select-none",
                                 isActive
-                                    ? "bg-white text-primary shadow-xs font-semibold"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                                    ? "bg-background text-primary shadow-xs font-semibold border border-border/40"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40",
                             )}
                         >
-                            <Icon className="size-3.5" />
+                            <Icon className="size-3.5 shrink-0" />
                             <span>{tab.label}</span>
                             {typeof tab.count === "number" && tab.count > 0 && (
                                 <Badge
                                     variant={isActive ? "default" : "secondary"}
-                                    className="px-1 py-0 text-[10px] h-3.5"
+                                    className="px-1.5 py-0 text-[10px] h-3.5 shrink-0 font-normal"
                                 >
                                     {tab.count}
                                 </Badge>
